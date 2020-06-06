@@ -2,6 +2,7 @@
 
 from tkinter import Tk, StringVar, N, W, E, S, SE, Text
 from tkinter import ttk
+from tkinter import Scrollbar, RIGHT, Y, NONE
 from tkinter import filedialog, END
 import subprocess
 from subprocess import PIPE
@@ -31,7 +32,7 @@ def save_file(*args):
     line = proc.stdout
     err = proc.stderr.decode("utf-8")
     if len(err) != 0:
-        file_err_label.set(err)
+        file_err_label.set(err.strip())
     else:
         open(file_name, "wb").write(line)
     subprocess.run(["rm", file_name + ".swp"])
@@ -71,20 +72,21 @@ def main():
     feet_entry.grid(column=1, row=3, sticky=(S))
     feet_entry.bind("<1>",  file_dialog)
 
-    file_text = Text(mainframe)
-    file_text.grid(column=1, row=2, sticky=(S, E))
+    scroll = Scrollbar(root)
+
+    file_text = Text(mainframe, yscrollcommand=scroll.set)
+    file_text.grid(column=0, row=2, columnspan=5, sticky=(W, E))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
-    ttk.Button(mainframe, text="Clear", command=clear).grid(column=3, row=2, sticky=(S))
+    ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
 
-    ttk.Label(mainframe, textvariable=file_err_label).grid(column=2, row=2, sticky=E+S)
+    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=5, sticky=(W, E))
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
     for child in mainframe.winfo_children():
         child.grid_configure(padx=10, pady=10)
 
     feet_entry.focus()
-    root.bind('<Return>', open_file)
 
     root.mainloop()
 
