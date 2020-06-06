@@ -89,6 +89,21 @@ def file_dialog(*args):
     file_name_label.set(file_name)
 
 
+def find(*args):
+    file_text.tag_remove('found', '1.0', END)
+    to_find = search_label.get()
+    if to_find:
+        idx = '1.0'
+        while True:
+            idx = file_text.search(to_find, idx, nocase=1, stopindex=END)
+            if not idx:
+                break
+            lastidx = '%s+%dc' % (idx, len(to_find))
+            file_text.tag_add('found', idx, lastidx)
+            idx = lastidx
+        file_text.tag_config('found', foreground='red', background="gray")
+
+
 def main():
     """
     main() -> None\n
@@ -106,9 +121,14 @@ def main():
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
 
-    feet_entry = ttk.Entry(mainframe, width=60, textvariable=file_name_label)
-    feet_entry.grid(column=1, row=3, sticky=(S))
-    feet_entry.bind("<1>",  file_dialog)
+    name_entry = ttk.Entry(mainframe, width=60, textvariable=file_name_label)
+    name_entry.grid(column=1, row=3, sticky=(S))
+    name_entry.bind("<1>",  file_dialog)
+
+    name_entry = ttk.Entry(mainframe, width=20, textvariable=search_label)
+    name_entry.grid(column=4, row=1, sticky=(S))
+    
+    ttk.Button(mainframe, text="Find", command=find).grid(column=5, row=1, sticky=(S))
 
     file_text = ScrolledText(mainframe, undo=True)
     file_text.grid(column=0, row=2, columnspan=6, sticky=(W, E))
@@ -118,15 +138,13 @@ def main():
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
     ttk.Button(mainframe, text="Save as", command=save_as_file).grid(column=5, row=3, sticky=(S))
 
-    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=1, sticky=(W, E))
-    ttk.Button(mainframe, text="Undo", command=undo_text).grid(column=1, row=1, sticky=(S))
-    ttk.Button(mainframe, text="Redo", command=redo_text).grid(column=2, row=1, sticky=(S))
+    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=2, sticky=(W, E))
+    ttk.Button(mainframe, text="Undo", command=undo_text).grid(column=2, row=1, sticky=(S, W))
+    ttk.Button(mainframe, text="Redo", command=redo_text).grid(column=3, row=1, sticky=(S, W))
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
     for child in mainframe.winfo_children():
         child.grid_configure(padx=10, pady=10)
-
-    feet_entry.focus()
 
     root.mainloop()
 
@@ -135,6 +153,7 @@ if __name__ == "__main__":
     root = Tk()
     file_name_label = StringVar()
     file_err_label = StringVar()
+    search_label = StringVar()
     file_text = None
     file_name = ""
 
