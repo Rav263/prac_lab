@@ -4,6 +4,7 @@ from tkinter import Tk, StringVar, N, W, E, S, SE
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from tkinter import filedialog, END
+from tkinter import TclError
 import subprocess
 from subprocess import PIPE
 
@@ -29,6 +30,24 @@ def save_as_file(*args):
     global file_name
     file_name = filedialog.asksaveasfilename()
     save_file()
+
+
+def undo_text(*args):
+    try:
+        global file_text
+        file_text.edit_undo()
+        file_err_label.set("")
+    except TclError as err_ex:
+        file_err_label.set(str(err_ex))
+
+
+def redo_text(*args):
+    try:
+        global file_text
+        file_text.edit_redo()
+        file_err_label.set("")
+    except TclError as err_ex:
+        file_err_label.set(str(err_ex))
 
 
 def save_file(*args):
@@ -91,7 +110,7 @@ def main():
     feet_entry.grid(column=1, row=3, sticky=(S))
     feet_entry.bind("<1>",  file_dialog)
 
-    file_text = ScrolledText(mainframe)
+    file_text = ScrolledText(mainframe, undo=True)
     file_text.grid(column=0, row=2, columnspan=6, sticky=(W, E))
 
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
@@ -99,7 +118,9 @@ def main():
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
     ttk.Button(mainframe, text="Save as", command=save_as_file).grid(column=5, row=3, sticky=(S))
 
-    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=6, sticky=(W, E))
+    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=1, sticky=(W, E))
+    ttk.Button(mainframe, text="Undo", command=undo_text).grid(column=1, row=1, sticky=(S))
+    ttk.Button(mainframe, text="Redo", command=redo_text).grid(column=2, row=1, sticky=(S))
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
     for child in mainframe.winfo_children():
