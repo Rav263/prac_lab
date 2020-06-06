@@ -138,8 +138,8 @@ def file_dialog(*args):
     file_name_label.set(file_name_dial)
 
 
-def find(*args):
-    """find(*args) -> None
+def find_all(*args):
+    """find_all(*args) -> None
 
     searching text in opened file and mark it
     """
@@ -147,6 +147,7 @@ def find(*args):
     file_text.tag_remove('found', '1.0', END)
     to_find = search_label.get()
     if to_find:
+        file_err_label.set("")
         idx = '1.0'
         while True:
             idx = file_text.search(to_find, idx, nocase=1, stopindex=END)
@@ -156,6 +157,38 @@ def find(*args):
             file_text.tag_add('found', idx, lastidx)
             idx = lastidx
         file_text.tag_config('found', foreground='red', background="gray")
+    else:
+        file_err_label.set("Nothing to search")
+
+
+def find(*args):
+    """find(*args) -> None
+
+    search next text
+    """
+    global last_search_label
+    global last_index
+
+    if search_label.get() != last_search_label:
+        last_index = "1.0"
+        file_text.tag_remove('found', '1.0', END)
+        last_search_label = search_label.get()
+
+    if last_search_label == "":
+        file_err_label.set("Nothing to search")
+    else:
+        file_err_label.set("")
+        index = file_text.search(last_search_label, last_index, nocase=1, stopindex=END)
+
+        if not index:
+            file_err_label.set("Nothing to search")
+            return None
+        end_index = f"{index}+{len(last_search_label)}c"
+        file_text.tag_add('found', index, end_index)
+        file_text.tag_config('found', foreground='red', background="gray")
+        last_index = end_index
+
+    return None
 
 
 def replace(*args):
@@ -172,8 +205,16 @@ def replace(*args):
         return False
 
     file_err_label.set("")
-    file_text.delete(indexes[0], f"{indexes[0]}+{to_find}c")
-    file_text.insert(indexes[0], replace_label.get())
+
+    global skip_flg
+    
+    if not skip_flg:
+        file_text.delete(indexes[0], f"{indexes[0]}+{to_find}c")
+        file_text.insert(indexes[0], replace_label.get())
+    else:
+        file_text.tag_remove("found", indexes[0], f"{indexes[0]}+{to_find}c")
+        skip_flg = False
+
     return True
 
 
@@ -185,6 +226,16 @@ def replace_all(*args):
 
     while replace():
         pass
+
+
+def skip(*args):
+    """skip(*args) -> None
+
+    set skip flag to replace
+    """
+    global skip_flg
+    skip_flg = True
+    replace()
 
 
 def main():
@@ -219,11 +270,13 @@ def main():
 
     # main scrolled text
     file_text = ScrolledText(mainframe, undo=True)
-    file_text.grid(column=0, row=2, columnspan=6, sticky=(W, E))
+    file_text.grid(column=0, row=2, columnspan=7, sticky=(W, E))
 
     # create all buttons
     ttk.Button(mainframe, text="Find", command=find).grid(column=5, row=0, sticky=(S))
+    ttk.Button(mainframe, text="Find all", command=find_all).grid(column=6, row=0, sticky=(S))
     ttk.Button(mainframe, text="Replace", command=replace).grid(column=5, row=1, sticky=(S))
+    ttk.Button(mainframe, text="Skip", command=skip).grid(column=6, row=1, sticky=(S))
     ttk.Button(mainframe, text="Replace all", command=replace_all).grid(column=3, row=1, sticky=(S))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
@@ -270,5 +323,8 @@ if __name__ == "__main__":
     replace_label = StringVar()
     file_text = None
     file_name = ""
+    last_search_label = ""
+    last_index = "1.0"
+    skip_flg = False
 
     main()
