@@ -7,19 +7,25 @@ import subprocess
 
 
 def open_file(*args):
+    global file_name
     pipe_fd = subprocess.PIPE
-    proc = subprocess.run(["xxd", "-g1", file_name_label.get()], stdout=pipe_fd)
+    file_name = file_name_label.get()
+    proc = subprocess.run(["xxd", "-g1", file_name], stdout=pipe_fd)
     line = proc.stdout.decode("utf-8")
-    file_text.insert(END,line)
+    file_text.insert(END, line)
 
 
 def save_file(*args):
-    pass
+    pipe_fd = subprocess.PIPE
+    open(file_name + ".swp", "wb").write(file_text.get("@0,0", END).encode("utf-8"))
+    proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=pipe_fd)
+    line = proc.stdout.decode("utf-8")
+    open(file_name, "w").write(line)
+    subprocess.run(["rm", file_name + ".swp"])
 
 
 def file_dialog(*args):
     file_name = filedialog.askopenfilename()
-    print(file_name)
     file_name_label.set(file_name)
 
 
@@ -63,6 +69,7 @@ def main():
 if __name__ == "__main__":
     root = Tk()
     file_name_label = StringVar()
-    file_text = Text()
+    file_text = None
+    file_name = ""
 
     main()
