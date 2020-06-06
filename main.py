@@ -4,33 +4,45 @@ from tkinter import Tk, StringVar, N, W, E, S, SE, Text
 from tkinter import ttk
 from tkinter import filedialog, END
 import subprocess
+from subprocess import PIPE
+
 
 title = "HEX EDIT"
 
 
 def open_file(*args):
     global file_name
-    pipe_fd = subprocess.PIPE
     file_name = file_name_label.get()
-    proc = subprocess.run(["xxd", "-g1", file_name], stdout=pipe_fd)
+    proc = subprocess.run(["xxd", "-g1", file_name], stdout=PIPE, stderr=PIPE)
     line = proc.stdout.decode("utf-8")
-    file_text.insert(END, line)
-    root.title(title + " " + file_name)
+    err = proc.stderr.decode("utf-8")
+    if len(err) != 0:
+        file_err_label.set(err)
+    else:
+        file_err_label.set("")
+        file_text.insert(END, line)
+        root.title(title + " " + file_name)
 
 
 def save_file(*args):
-    pipe_fd = subprocess.PIPE
+    root.title(title + " " + file_name + " saving...")
     open(file_name + ".swp", "wb").write(file_text.get("@0,0", END).encode("utf-8"))
-    proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=pipe_fd)
+    proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=PIPE, stderr=PIPE)
     line = proc.stdout
-    open(file_name, "wb").write(line)
+    err = proc.stderr.decode("utf-8")
+    if len(err) != 0:
+        file_err_label.set(err)
+    else:
+        open(file_name, "wb").write(line)
     subprocess.run(["rm", file_name + ".swp"])
+    root.title(title + " " + file_name)
 
 
 def clear(*args):
     global file_name
     file_text.delete("1.0", END)
     file_name = ""
+    root.title(title)
 
 
 def file_dialog(*args):
@@ -65,6 +77,7 @@ def main():
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=3, row=2, sticky=(S))
 
+    ttk.Label(mainframe, textvariable=file_err_label).grid(column=2, row=2, sticky=E+S)
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
     for child in mainframe.winfo_children():
@@ -79,6 +92,7 @@ def main():
 if __name__ == "__main__":
     root = Tk()
     file_name_label = StringVar()
+    file_err_label = StringVar()
     file_text = None
     file_name = ""
 
