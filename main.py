@@ -88,7 +88,7 @@ def save_file(*args):
     global file_to_save
     global file_name
 
-    if len(file_to_save):
+    if file_to_save != "":
         file_name = file_to_save
         file_to_save = ""
 
@@ -227,6 +227,7 @@ def args_parse():
 
         global file_to_save
         file_to_save = sys.argv[2]
+
 
 if __name__ == "__main__":
     root = Tk()
