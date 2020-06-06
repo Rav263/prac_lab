@@ -5,6 +5,8 @@ from tkinter import ttk
 from tkinter import filedialog, END
 import subprocess
 
+title = "HEX EDIT"
+
 
 def open_file(*args):
     global file_name
@@ -13,15 +15,22 @@ def open_file(*args):
     proc = subprocess.run(["xxd", "-g1", file_name], stdout=pipe_fd)
     line = proc.stdout.decode("utf-8")
     file_text.insert(END, line)
+    root.title(title + " " + file_name)
 
 
 def save_file(*args):
     pipe_fd = subprocess.PIPE
     open(file_name + ".swp", "wb").write(file_text.get("@0,0", END).encode("utf-8"))
     proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=pipe_fd)
-    line = proc.stdout.decode("utf-8")
-    open(file_name, "w").write(line)
+    line = proc.stdout
+    open(file_name, "wb").write(line)
     subprocess.run(["rm", file_name + ".swp"])
+
+
+def clear(*args):
+    global file_name
+    file_text.delete("1.0", END)
+    file_name = ""
 
 
 def file_dialog(*args):
@@ -39,10 +48,10 @@ def main():
     """
     global file_text
 
-    root.title("HEX EDIT")
+    root.title(title)
 
     mainframe = ttk.Frame(root, width=1280, height=720, padding="3 3 12 12")
-    mainframe.grid(column=0, row=0) # , sticky=(N, W, E, S))
+    mainframe.grid(column=0, row=0)
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
 
@@ -54,6 +63,7 @@ def main():
     file_text.grid(column=1, row=2, sticky=(S, E))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
+    ttk.Button(mainframe, text="Clear", command=clear).grid(column=3, row=2, sticky=(S))
 
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
