@@ -159,19 +159,32 @@ def find(*args):
 
 
 def replace(*args):
-    """replace(*args) -> None
+    """replace(*args) -> bool
 
     replace next searched value
+    return True if was replaced else False
     """
 
     indexes = file_text.tag_nextrange("found", "1.0")
     to_find = len(search_label.get())
     if len(indexes) == 0:
         file_err_label.set("Nothing to replace")
-    else:
-        file_err_label.set("")
-        file_text.delete(indexes[0], f"{indexes[0]}+{to_find}c")
-        file_text.insert(indexes[0], replace_label.get())
+        return False
+
+    file_err_label.set("")
+    file_text.delete(indexes[0], f"{indexes[0]}+{to_find}c")
+    file_text.insert(indexes[0], replace_label.get())
+    return True
+
+
+def replace_all(*args):
+    """replace_all(*args) -> None
+
+    replaced all words
+    """
+
+    while replace():
+        pass
 
 
 def main():
@@ -211,6 +224,7 @@ def main():
     # create all buttons
     ttk.Button(mainframe, text="Find", command=find).grid(column=5, row=0, sticky=(S))
     ttk.Button(mainframe, text="Replace", command=replace).grid(column=5, row=1, sticky=(S))
+    ttk.Button(mainframe, text="Replace all", command=replace_all).grid(column=3, row=1, sticky=(S))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
