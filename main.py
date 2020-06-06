@@ -29,7 +29,7 @@ def open_file(*args):
     global file_name
 
     file_name = file_name_label.get()
-    proc = subprocess.run(["xxd", "-g1", file_name], stdout=PIPE, stderr=PIPE, check=True)
+    proc = subprocess.run(["xxd", "-g1", file_name], stdout=PIPE, stderr=PIPE, check=False)
     line = proc.stdout.decode("utf-8")
     err = proc.stderr.decode("utf-8")
 
@@ -98,7 +98,7 @@ def save_file(*args):
     tmp_file.write(file_text.get("@0,0", END).encode("utf-8"))
     tmp_file.close()
 
-    proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=PIPE, stderr=PIPE, check=True)
+    proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=PIPE, stderr=PIPE, check=False)
     line = proc.stdout
     err = proc.stderr.decode("utf-8")
 
@@ -152,10 +152,26 @@ def find(*args):
             idx = file_text.search(to_find, idx, nocase=1, stopindex=END)
             if not idx:
                 break
-            lastidx = '%s+%dc' % (idx, len(to_find))
+            lastidx = f"{idx}+{len(to_find)}c"
             file_text.tag_add('found', idx, lastidx)
             idx = lastidx
         file_text.tag_config('found', foreground='red', background="gray")
+
+
+def replace(*args):
+    """replace(*args) -> None
+
+    replace next searched value
+    """
+
+    indexes = file_text.tag_nextrange("found", "1.0")
+    to_find = len(search_label.get())
+    if len(indexes) == 0:
+        file_err_label.set("Nothing to replace")
+    else:
+        file_err_label.set("")
+        file_text.delete(indexes[0], f"{indexes[0]}+{to_find}c")
+        file_text.insert(indexes[0], replace_label.get())
 
 
 def main():
@@ -184,20 +200,23 @@ def main():
 
     # search entry
     search_entry = ttk.Entry(mainframe, width=20, textvariable=search_label)
-    search_entry.grid(column=4, row=1, sticky=(S))
+    search_entry.grid(column=4, row=0, sticky=(S))
+    replace_entry = ttk.Entry(mainframe, width=20, textvariable=replace_label)
+    replace_entry.grid(column=4, row=1, sticky=(S))
 
     # main scrolled text
     file_text = ScrolledText(mainframe, undo=True)
     file_text.grid(column=0, row=2, columnspan=6, sticky=(W, E))
 
     # create all buttons
-    ttk.Button(mainframe, text="Find", command=find).grid(column=5, row=1, sticky=(S))
+    ttk.Button(mainframe, text="Find", command=find).grid(column=5, row=0, sticky=(S))
+    ttk.Button(mainframe, text="Replace", command=replace).grid(column=5, row=1, sticky=(S))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
     ttk.Button(mainframe, text="Save as", command=save_as_file).grid(column=5, row=3, sticky=(S))
-    ttk.Button(mainframe, text="Undo", command=undo_text).grid(column=2, row=1, sticky=(S, W))
-    ttk.Button(mainframe, text="Redo", command=redo_text).grid(column=3, row=1, sticky=(S, W))
+    ttk.Button(mainframe, text="Undo", command=undo_text).grid(column=2, row=0, sticky=(S, W))
+    ttk.Button(mainframe, text="Redo", command=redo_text).grid(column=3, row=0, sticky=(S, W))
 
     # create labels
     err_label = ttk.Label(mainframe, textvariable=file_err_label)
@@ -234,6 +253,7 @@ if __name__ == "__main__":
     file_name_label = StringVar()
     file_err_label = StringVar()
     search_label = StringVar()
+    replace_label = StringVar()
     file_text = None
     file_name = ""
 
