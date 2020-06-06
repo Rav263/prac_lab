@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-from tkinter import Tk, StringVar, N, W, E, S, SE, Text
+from tkinter import Tk, StringVar, N, W, E, S, SE
 from tkinter import ttk
-from tkinter import Scrollbar, RIGHT, Y, NONE
+from tkinter.scrolledtext import ScrolledText
 from tkinter import filedialog, END
 import subprocess
 from subprocess import PIPE
@@ -25,16 +25,29 @@ def open_file(*args):
         root.title(title + " " + file_name)
 
 
+def save_as_file(*args):
+    global file_name
+    file_name = filedialog.asksaveasfilename()
+    save_file()
+
+
 def save_file(*args):
     root.title(title + " " + file_name + " saving...")
-    open(file_name + ".swp", "wb").write(file_text.get("@0,0", END).encode("utf-8"))
+    
+    tmp_file = open(file_name + ".swp", "wb")
+    tmp_file.write(file_text.get("@0,0", END).encode("utf-8"))
+    tmp_file.close()
+
     proc = subprocess.run(["xxd", "-r", file_name + ".swp"], stdout=PIPE, stderr=PIPE)
     line = proc.stdout
     err = proc.stderr.decode("utf-8")
+    
     if len(err) != 0:
         file_err_label.set(err.strip())
     else:
-        open(file_name, "wb").write(line)
+        out_file = open(file_name, "wb")
+        out_file.write(line)
+        out_file.close()
     subprocess.run(["rm", file_name + ".swp"])
     root.title(title + " " + file_name)
 
@@ -72,15 +85,15 @@ def main():
     feet_entry.grid(column=1, row=3, sticky=(S))
     feet_entry.bind("<1>",  file_dialog)
 
-    scroll = Scrollbar(root)
+    file_text = ScrolledText(mainframe)
+    file_text.grid(column=0, row=2, columnspan=6, sticky=(W, E))
 
-    file_text = Text(mainframe, yscrollcommand=scroll.set)
-    file_text.grid(column=0, row=2, columnspan=5, sticky=(W, E))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
     ttk.Button(mainframe, text="Clear", command=clear).grid(column=4, row=3, sticky=(S))
+    ttk.Button(mainframe, text="Save as", command=save_as_file).grid(column=5, row=3, sticky=(S))
 
-    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=5, sticky=(W, E))
+    ttk.Label(mainframe, textvariable=file_err_label).grid(column=0, row=1, columnspan=6, sticky=(W, E))
     ttk.Label(mainframe, text="File name:").grid(column=0, row=3, sticky=W+S)
 
     for child in mainframe.winfo_children():
