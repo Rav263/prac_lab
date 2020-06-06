@@ -45,9 +45,15 @@ def save_file(*args):
     if len(err) != 0:
         file_err_label.set(err.strip())
     else:
-        out_file = open(file_name, "wb")
-        out_file.write(line)
-        out_file.close()
+        try:
+            out_file = open(file_name, "wb")
+            out_file.write(line)
+            out_file.close()
+        except PermissionError as err_ex:
+            file_err_label.set(str(err_ex).strip())
+        except FileNotFoundError:
+            file_err_label.set("FILE NOT OPENED")
+    
     subprocess.run(["rm", file_name + ".swp"])
     root.title(title + " " + file_name)
 
