@@ -1,12 +1,16 @@
 #!/usr/bin/python3
 
-from tkinter import Tk, StringVar, N, W, E, S, SE
+from tkinter import Tk, StringVar, N, W, E, S, SE, Text
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, END
+import subprocess
 
 
 def open_file(*args):
-    pass
+    pipe_fd = subprocess.PIPE
+    proc = subprocess.run(["xxd", "-g1", file_name_label.get()], stdout=pipe_fd)
+    line = proc.stdout.decode("utf-8")
+    file_text.insert(END,line)
 
 
 def save_file(*args):
@@ -27,6 +31,8 @@ def main():
     create all widgets
     start main loop
     """
+    global file_text
+
     root.title("HEX EDIT")
 
     mainframe = ttk.Frame(root, width=1280, height=720, padding="3 3 12 12")
@@ -34,11 +40,12 @@ def main():
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
 
-    feet_entry = ttk.Entry(mainframe, width=100, textvariable=file_name_label)
+    feet_entry = ttk.Entry(mainframe, width=60, textvariable=file_name_label)
     feet_entry.grid(column=1, row=3, sticky=(S))
     feet_entry.bind("<1>",  file_dialog)
 
-    ttk.Label(mainframe, textvariable=file_text).grid(column=2, row=2, sticky=(S, E))
+    file_text = Text(mainframe)
+    file_text.grid(column=1, row=2, sticky=(S, E))
     ttk.Button(mainframe, text="Save", command=save_file).grid(column=2, row=3, sticky=(S))
     ttk.Button(mainframe, text="Open", command=open_file).grid(column=3, row=3, sticky=(S))
 
@@ -56,6 +63,6 @@ def main():
 if __name__ == "__main__":
     root = Tk()
     file_name_label = StringVar()
-    file_text = StringVar()
+    file_text = Text()
 
     main()
